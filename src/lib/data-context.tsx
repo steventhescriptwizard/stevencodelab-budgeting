@@ -22,6 +22,35 @@ interface BudgetWithSpent extends Budget {
   spent: number;
 }
 
+interface RecurringTemplate {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  type: 'income' | 'expense';
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  next_date: string;
+  last_executed_at?: string;
+  is_active: boolean;
+}
+
+interface SavingsGoal {
+  id: string;
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  deadline_date?: string;
+  icon: string;
+  color: string;
+}
+
+interface MonthlyTrend {
+  month: string;
+  income: number;
+  expense: number;
+  savings: number;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -38,6 +67,7 @@ interface Stats {
   prevMonthlyExpense: number;
   incomeTrend: number;
   expenseTrend: number;
+  monthlyTrends: MonthlyTrend[];
 }
 
 interface UserProfile {
@@ -51,6 +81,8 @@ interface DataContextType {
   categories: Category[];
   stats: Stats;
   budgets: BudgetWithSpent[];
+  recurringTemplates: RecurringTemplate[];
+  savingsGoals: SavingsGoal[];
   loading: boolean;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => Promise<void>;
@@ -62,6 +94,12 @@ interface DataContextType {
   addBudget: (budget: Omit<Budget, 'id'>) => Promise<void>;
   updateBudget: (id: string, budget: Partial<Budget>) => Promise<void>;
   deleteBudget: (id: string) => Promise<void>;
+  addRecurringTemplate: (template: Omit<RecurringTemplate, 'id'>) => Promise<void>;
+  updateRecurringTemplate: (id: string, template: Partial<RecurringTemplate>) => Promise<void>;
+  deleteRecurringTemplate: (id: string) => Promise<void>;
+  addSavingsGoal: (goal: Omit<SavingsGoal, 'id'>) => Promise<void>;
+  updateSavingsGoal: (id: string, goal: Partial<SavingsGoal>) => Promise<void>;
+  deleteSavingsGoal: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -74,6 +112,8 @@ export function DataProvider({ children }: DataProviderProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [recurringTemplates, setRecurringTemplates] = useState<RecurringTemplate[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -122,11 +162,15 @@ export function DataProvider({ children }: DataProviderProps) {
         const [
           { data: transactionsData },
           { data: categoriesData },
-          { data: budgetsData }
+          { data: budgetsData },
+          { data: recurringData },
+          { data: goalsData }
         ] = await Promise.all([
           supabase.from('transactions').select('*').order('date', { ascending: false }),
           supabase.from('categories').select('*'),
-          supabase.from('budgets').select('*')
+          supabase.from('budgets').select('*'),
+          supabase.from('recurring_templates').select('*'),
+          supabase.from('savings_goals').select('*')
         ]);
 
         if (transactionsData) setTransactions(transactionsData);
@@ -140,6 +184,8 @@ export function DataProvider({ children }: DataProviderProps) {
           }));
           setBudgets(mapped);
         }
+        if (recurringData) setRecurringTemplates(recurringData);
+        if (goalsData) setSavingsGoals(goalsData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -188,6 +234,25 @@ export function DataProvider({ children }: DataProviderProps) {
     const incomeTrend = calculateTrend(monthlyIncome, prevMonthlyIncome);
     const expenseTrend = calculateTrend(monthlyExpense, prevMonthlyExpense);
 
+    // Calculate 6-month trends
+    const monthlyTrends: MonthlyTrend[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mStr = d.toISOString().slice(0, 7);
+      const monthLabel = d.toLocaleString('default', { month: 'short' });
+      
+      const mTransactions = transactions.filter(t => t.date.startsWith(mStr));
+      const mIncome = mTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const mExpense = mTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      
+      monthlyTrends.push({
+        month: monthLabel,
+        income: mIncome,
+        expense: mExpense,
+        savings: mIncome - mExpense
+      });
+    }
+
     return { 
       totalBalance, 
       monthlyIncome, 
@@ -195,7 +260,8 @@ export function DataProvider({ children }: DataProviderProps) {
       prevMonthlyIncome, 
       prevMonthlyExpense,
       incomeTrend,
-      expenseTrend
+      expenseTrend,
+      monthlyTrends
     };
   }, [transactions]);
 
@@ -348,6 +414,80 @@ export function DataProvider({ children }: DataProviderProps) {
     }
   };
 
+  const addRecurringTemplate = async (template: Omit<RecurringTemplate, 'id'>) => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from('recurring_templates')
+      .insert([{ ...template, user_id: userId }])
+      .select()
+      .single();
+
+    if (!error && data) {
+      setRecurringTemplates(prev => [...prev, data]);
+    }
+  };
+
+  const updateRecurringTemplate = async (id: string, template: Partial<RecurringTemplate>) => {
+    const { error } = await supabase
+      .from('recurring_templates')
+      .update(template)
+      .eq('id', id);
+
+    if (!error) {
+      setRecurringTemplates(prev =>
+        prev.map(t => (t.id === id ? { ...t, ...template } : t))
+      );
+    }
+  };
+
+  const deleteRecurringTemplate = async (id: string) => {
+    const { error } = await supabase
+      .from('recurring_templates')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      setRecurringTemplates(prev => prev.filter(t => t.id !== id));
+    }
+  };
+
+  const addSavingsGoal = async (goal: Omit<SavingsGoal, 'id'>) => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from('savings_goals')
+      .insert([{ ...goal, user_id: userId }])
+      .select()
+      .single();
+
+    if (!error && data) {
+      setSavingsGoals(prev => [...prev, data]);
+    }
+  };
+
+  const updateSavingsGoal = async (id: string, goal: Partial<SavingsGoal>) => {
+    const { error } = await supabase
+      .from('savings_goals')
+      .update(goal)
+      .eq('id', id);
+
+    if (!error) {
+      setSavingsGoals(prev =>
+        prev.map(g => (g.id === id ? { ...g, ...goal } : g))
+      );
+    }
+  };
+
+  const deleteSavingsGoal = async (id: string) => {
+    const { error } = await supabase
+      .from('savings_goals')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      setSavingsGoals(prev => prev.filter(g => g.id !== id));
+    }
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -356,6 +496,8 @@ export function DataProvider({ children }: DataProviderProps) {
         categories,
         stats,
         budgets: budgetsWithSpent,
+        recurringTemplates,
+        savingsGoals,
         loading,
         addTransaction,
         updateTransaction,
@@ -367,6 +509,12 @@ export function DataProvider({ children }: DataProviderProps) {
         addBudget,
         updateBudget,
         deleteBudget,
+        addRecurringTemplate,
+        updateRecurringTemplate,
+        deleteRecurringTemplate,
+        addSavingsGoal,
+        updateSavingsGoal,
+        deleteSavingsGoal,
       }}
     >
       {children}

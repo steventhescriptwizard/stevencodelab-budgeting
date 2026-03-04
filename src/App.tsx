@@ -9,6 +9,8 @@ import Transactions from '@/pages/Transactions';
 import Budgets from '@/pages/Budgets';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
+import Recurring from '@/pages/Recurring';
+import Goals from '@/pages/Goals';
 import Login from '@/pages/Login';
 import { Loader2 } from 'lucide-react';
 
@@ -54,6 +56,8 @@ function AppContent({ isAuthenticated, setIsAuthenticated }: {
                   <Route path="/transactions" element={<Transactions />} />
                   <Route path="/budgets" element={<Budgets />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/recurring" element={<Recurring />} />
+                  <Route path="/goals" element={<Goals />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

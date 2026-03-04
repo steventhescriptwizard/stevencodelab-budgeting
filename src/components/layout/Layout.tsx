@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Wallet, CreditCard, PieChart, Settings, Bell, Search, Menu, X, LogOut, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Wallet, CreditCard, PieChart, Settings, Bell, Search, Menu, X, LogOut, Moon, Sun, Repeat, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '@/lib/theme-context';
@@ -25,7 +25,9 @@ export default function Layout({ children, onLogout }: LayoutProps) {
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: CreditCard, label: 'Transactions', path: '/transactions' },
+    { icon: Repeat, label: 'Recurring', path: '/recurring' },
     { icon: PieChart, label: 'Reports', path: '/reports' },
+    { icon: Target, label: 'Goals', path: '/goals' },
     { icon: Wallet, label: 'Budgets', path: '/budgets' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
