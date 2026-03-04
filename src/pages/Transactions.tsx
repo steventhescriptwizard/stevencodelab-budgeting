@@ -138,50 +138,67 @@ export default function Transactions() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <input 
-              type="date" 
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-transparent border-none p-0 text-sm text-slate-700 dark:text-slate-300 focus:ring-0 w-32"
-            />
-            <span className="text-slate-400 text-xs">to</span>
-            <input 
-              type="date" 
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-transparent border-none p-0 text-sm text-slate-700 dark:text-slate-300 focus:ring-0 w-32"
-            />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+          {/* Date Range */}
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 ml-1">Date Range</label>
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 h-11">
+              <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent border-none p-0 text-sm text-slate-700 dark:text-slate-300 focus:ring-0 w-full min-w-0"
+                />
+                <span className="text-slate-400 text-xs shrink-0">to</span>
+                <input 
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent border-none p-0 text-sm text-slate-700 dark:text-slate-300 focus:ring-0 w-full min-w-0"
+                />
+              </div>
+            </div>
           </div>
 
-          <select 
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg focus:ring-[#064c39] dark:focus:ring-emerald-500 focus:border-[#064c39] dark:focus:border-emerald-500 block p-2.5 transition-all outline-none"
-          >
-            <option>All Categories</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.name}>{c.name}</option>
-            ))}
-          </select>
+          {/* Category Filter */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 ml-1">Category</label>
+            <select 
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg focus:ring-[#064c39] dark:focus:ring-emerald-500 focus:border-[#064c39] dark:focus:border-emerald-500 block w-full h-11 px-2.5 transition-all outline-none"
+            >
+              <option>All Categories</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </div>
           
-          <select 
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg focus:ring-[#064c39] dark:focus:ring-emerald-500 focus:border-[#064c39] dark:focus:border-emerald-500 block p-2.5"
-          >
-            <option>Transaction Type</option>
-            <option value="Income">Income</option>
-            <option value="Expense">Expense</option>
-          </select>
-        </div>
-        <button className="flex items-center gap-2 text-[#064c39] dark:text-emerald-400 font-medium text-sm hover:bg-[#064c39]/5 dark:hover:bg-emerald-500/10 px-3 py-2 rounded-lg transition-colors">
-          <Download className="w-4 h-4" />
-          Export CSV
-        </button>
+          {/* Type Filter */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 ml-1">Type</label>
+            <select 
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg focus:ring-[#064c39] dark:focus:ring-emerald-500 focus:border-[#064c39] dark:focus:border-emerald-500 block w-full h-11 px-2.5"
+            >
+              <option>Transaction Type</option>
+              <option value="Income">Income</option>
+              <option value="Expense">Expense</option>
+            </select>
+          </div>
+
+          {/* Export Button */}
+          <div className="flex flex-col gap-1.5 justify-end">
+            <button className="flex items-center justify-center gap-2 text-[#064c39] dark:text-emerald-400 font-medium text-sm hover:bg-[#064c39]/5 dark:hover:bg-emerald-500/10 px-4 h-11 rounded-lg transition-colors border border-[#064c39]/20 dark:border-emerald-500/20">
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+          </div>
         </div>
       </div>
 
