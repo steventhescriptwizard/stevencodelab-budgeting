@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '@/lib/data-context';
-import { Download, Filter, Search, ArrowUpRight, ArrowDownRight, Calendar, Trash2, CheckSquare, Square, Edit2 } from 'lucide-react';
+import { Download, Filter, Search, ArrowUpRight, ArrowDownRight, Calendar, Trash2, CheckSquare, Square, Edit2, X } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { cn } from '@/lib/utils';
 import AddTransactionModal from '@/components/ui/AddTransactionModal';
@@ -101,15 +101,23 @@ export default function Transactions() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Transaction History</h1>
           <p className="text-slate-500 dark:text-slate-400">Monitor and manage your financial activities.</p>
         </div>
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="relative group">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#064c39] dark:group-focus-within:text-emerald-400 transition-colors" />
           <input 
             type="text" 
-            placeholder="Search transactions..." 
+            placeholder="Search by description or category..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#064c39]/20 dark:focus:ring-emerald-500/20 w-full sm:w-64 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+            className="pl-9 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#064c39]/20 dark:focus:ring-emerald-500/20 w-full sm:w-72 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 transition-all shadow-sm focus:shadow-md"
           />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
