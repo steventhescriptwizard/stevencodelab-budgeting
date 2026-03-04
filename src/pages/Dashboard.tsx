@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useData } from '@/lib/data-context';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, ShoppingBag, Utensils, Car, MoreHorizontal, Plus } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, MoreHorizontal, ShoppingBag, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import AddTransactionModal from '@/components/ui/AddTransactionModal';
 
 export default function Dashboard() {
-  const { user, stats, transactions, categories } = useData();
+  const { user, stats, transactions, categories, savingsGoals } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Calculate dynamic spending data
@@ -110,111 +110,214 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Savings Goals Highlights */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[#064c39] dark:text-emerald-400" />
+            Savings Goals
+          </h3>
+          <button 
+            onClick={() => {/* TODO: Open Goal Modal */}}
+            className="text-xs font-bold text-[#064c39] dark:text-emerald-400 hover:underline flex items-center gap-1"
+          >
+            <Plus className="w-3 h-3" />
+            Add New Goal
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {savingsGoals.length > 0 ? (
+            savingsGoals.map(goal => {
+              const progress = Math.min(Math.round((goal.current_amount / goal.target_amount) * 100), 100);
+              return (
+                <div key={goal.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md group">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow-sm" style={{ backgroundColor: `${goal.color}15`, color: goal.color }}>
+                      {goal.icon}
+                    </div>
+                    <span className="text-[10px] font-extrabold text-[#064c39] dark:text-emerald-400 bg-[#064c39]/5 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      {progress}%
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate mb-1">{goal.name}</h4>
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Progress</span>
+                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                      Rp {goal.current_amount.toLocaleString('id-ID')} / {goal.target_amount.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full rounded-full transition-all duration-1000 group-hover:brightness-110" 
+                      style={{ width: `${progress}%`, backgroundColor: goal.color }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="col-span-full bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center">
+              <p className="text-sm text-slate-500 dark:text-slate-400">No savings goals yet. Start saving for something special!</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Spending Chart */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-slate-900 dark:text-slate-100">Spending by Category</h3>
-            <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-              <MoreHorizontal className="w-5 h-5" />
+        {/* Spending by Category */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden transition-all hover:shadow-md">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm tracking-tight">Spending by Category</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">This month's breakdown</p>
+            </div>
+            <button className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-all">
+              <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
-          
-          <div className="h-64 sm:h-80 w-full min-h-[250px] relative flex items-center justify-center">
+
+          {/* Donut Chart */}
+          <div className="px-6 pt-5 pb-2">
             {spendingData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={spendingData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={5}
-                    dataKey="amount"
-                  >
-                    {spendingData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={2} stroke={document.documentElement.classList.contains('dark') ? '#0f172a' : '#fff'} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Amount']}
-                    contentStyle={{ 
-                      backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff', 
-                      borderColor: document.documentElement.classList.contains('dark') ? '#334155' : '#e2e8f0',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                      borderWidth: '1px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-center p-6 space-y-3">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500">
-                  <ShoppingBag className="w-8 h-8 opacity-20" />
+              <div className="relative flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie
+                      data={spendingData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={58}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      dataKey="amount"
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      {spendingData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Amount']}
+                      contentStyle={{
+                        backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                        borderColor: document.documentElement.classList.contains('dark') ? '#334155' : '#f1f5f9',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 20px -4px rgb(0 0 0 / 0.15)',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        padding: '8px 12px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center label */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                  <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 mt-0.5 leading-tight text-center px-2">{totalSpentFormatted}</span>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">No expenses recorded for this period.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-44 space-y-3">
+                <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                  <ShoppingBag className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+                </div>
+                <p className="text-xs text-slate-400 font-medium">No expenses recorded yet</p>
               </div>
             )}
           </div>
 
-          <div className="space-y-4 mt-6">
-            {spendingData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow-sm border border-slate-100 dark:border-slate-800 group-hover:scale-110 transition-transform" style={{ backgroundColor: `${item.color}15`, color: item.color }}>
-                    {item.icon}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">{item.value}% of total</span>
-                  </div>
+          {/* Category List */}
+          <div className="px-6 pb-6 space-y-1">
+            {spendingData.slice(0, 4).map((item) => (
+              <div
+                key={item.name}
+                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group cursor-default"
+              >
+                {/* Color dot */}
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+
+                {/* Icon + Name */}
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="text-base leading-none">{item.icon}</span>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{item.name}</span>
                 </div>
-                <span className="text-sm font-extrabold text-[#064c39] dark:text-emerald-400">
-                  Rp {item.amount.toLocaleString('id-ID')}
-                </span>
+
+                {/* Bar + % */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${item.value}%`, backgroundColor: item.color }}
+                    />
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 w-7 text-right">{item.value}%</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Recent Transactions */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-slate-900 dark:text-slate-100">Recent Transactions</h3>
-            <button className="text-[#064c39] dark:text-emerald-400 text-sm font-medium hover:underline">View All</button>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden transition-all hover:shadow-md">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm tracking-tight">Recent Transactions</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{transactions.slice(0, 5).length} latest entries</p>
+            </div>
+            <button className="text-xs font-bold text-[#064c39] dark:text-emerald-400 hover:text-[#064c39]/70 dark:hover:text-emerald-300 transition-colors px-3 py-1.5 rounded-lg hover:bg-[#064c39]/5 dark:hover:bg-emerald-500/10">
+              View All →
+            </button>
           </div>
 
-          <div className="space-y-4">
-            {transactions.slice(0, 5).map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors">
-                <div className="flex items-center gap-4">
+          {/* Transaction List */}
+          <div className="flex-1 divide-y divide-slate-50 dark:divide-slate-800">
+            {transactions.slice(0, 5).map((tx) => {
+              const icon = categories.find(c => c.name === tx.category)?.icon || (tx.type === 'income' ? '💰' : '📦');
+              return (
+                <div
+                  key={tx.id}
+                  className="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-all group cursor-default"
+                >
+                  {/* Icon */}
                   <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm border border-white/50 dark:border-slate-700/50",
-                    tx.type === 'income' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                    "w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0 transition-transform group-hover:scale-105",
+                    tx.type === 'income'
+                      ? 'bg-emerald-50 dark:bg-emerald-900/30'
+                      : 'bg-slate-50 dark:bg-slate-800'
                   )}>
-                    {categories.find(c => c.name === tx.category)?.icon || (tx.type === 'income' ? '💰' : '📦')}
+                    {icon}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-slate-100">{tx.description}</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{tx.category} • {tx.date}</p>
+
+                  {/* Description + meta */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate leading-snug">{tx.description}</h4>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium">{tx.category} · {tx.date}</p>
+                  </div>
+
+                  {/* Amount + status */}
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <span className={cn(
+                      "text-sm font-bold tracking-tight",
+                      tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                    )}>
+                      {tx.type === 'income' ? '+' : '−'}Rp {tx.amount.toLocaleString('id-ID')}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-md",
+                      tx.status === 'completed'
+                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
+                        : "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                    )}>
+                      {tx.status}
+                    </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={`font-bold ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                    {tx.type === 'income' ? '+' : '-'}Rp {tx.amount.toLocaleString('id-ID')}
-                  </p>
-                  <p className={`text-[10px] font-bold uppercase tracking-wider ${
-                    tx.status === 'completed' ? 'text-slate-400 dark:text-slate-500' : 'text-amber-500 dark:text-amber-400'
-                  }`}>
-                    {tx.status}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
