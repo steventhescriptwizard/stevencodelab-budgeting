@@ -179,10 +179,10 @@ export default function Dashboard() {
           </div>
 
           {/* Donut Chart */}
-          <div className="px-6 pt-5 pb-2">
+          <div className="px-6 pt-5 pb-2 min-h-[180px]">
             {spendingData.length > 0 ? (
-              <div className="relative flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={180}>
+              <div className="relative flex items-center justify-center h-[180px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={spendingData}
